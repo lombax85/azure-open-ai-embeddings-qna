@@ -29,6 +29,8 @@ services:
       - "8081:80"
     env_file:
       - .env
+    volumes:
+      - 'C:\Users\fabiolombardo\OneDrive - Logotel S.p.A\LogotelWindows\azure-open-ai-embeddings-qna/code/:/home/site/wwwroot'
     depends_on:
       api:
         condition: service_healthy
