@@ -2,4 +2,5 @@
 code/embeddings_text.csv
 code/utilities/__pycache__
 .env
+.env.lombax
 __pycache__
