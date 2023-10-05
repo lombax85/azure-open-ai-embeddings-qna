@@ -6,6 +6,8 @@ services:
       - "8080:80"
     env_file:
       - .env
+    volumes:
+      - 'C:\Users\fabiolombardo\OneDrive - Logotel S.p.A\LogotelWindows\azure-open-ai-embeddings-qna/code/:/usr/local/src/myscripts'
     depends_on:
       api:
         condition: service_healthy
