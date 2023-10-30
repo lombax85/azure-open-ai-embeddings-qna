@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     volumes:
-      - 'C:\Users\fabiolombardo\OneDrive - Logotel S.p.A\LogotelWindows\azure-open-ai-embeddings-qna/code/:/usr/local/src/myscripts'
+      - '/media/walastorage/nextcloud/lombax85/files/NAS/ArchivioLocalRW/Temp/openai_embeddings/code/:/usr/local/src/myscripts'
     depends_on:
       api:
         condition: service_healthy
@@ -18,7 +18,7 @@ services:
     env_file:
       - .env
     volumes:
-      - C:\Users\fabiolombardo\redis\:/data
+      - /media/walastorage/nextcloud/lombax85/files/NAS/ArchivioLocalRW/Temp/openai_embeddings_data/:/data
     healthcheck:
       test: ["CMD", "redis-cli", "-h", "localhost", "-p", "6379", "ping"]
       interval: 2s
@@ -32,7 +32,7 @@ services:
     env_file:
       - .env
     volumes:
-      - 'C:\Users\fabiolombardo\OneDrive - Logotel S.p.A\LogotelWindows\azure-open-ai-embeddings-qna/code/:/home/site/wwwroot'
+      - '/media/walastorage/nextcloud/lombax85/files/NAS/ArchivioLocalRW/Temp/openai_embeddings/code/:/home/site/wwwroot'
     depends_on:
       api:
         condition: service_healthy
