@@ -187,7 +187,7 @@ try:
         st.session_state['question'], \
         st.session_state['response'], \
         st.session_state['context'], \
-        st.session_state['sources'] = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], [])
+        st.session_state['sources'], st.session_state['metadata'] = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], [])
         st.session_state['response'], followup_questions_list = llm_helper.extract_followupquestions(st.session_state['response'])
         st.session_state['followup_questions'] = followup_questions_list
 
@@ -226,6 +226,8 @@ try:
                         st.markdown(f"{context_text}")
 
             st.markdown(f"SOURCES: {st.session_state['sources']}") 
+
+    st.session_state['metadata']
 
     for questionId, followup_question in enumerate(st.session_state['followup_questions']):
         if followup_question:

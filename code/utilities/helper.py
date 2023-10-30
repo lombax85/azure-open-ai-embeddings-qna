@@ -137,7 +137,7 @@ class LLMHelper:
                 hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
                 hash_key = f"doc:{self.index_name}:{hash_key}"
                 keys.append(hash_key)
-                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename}
+                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "test_meta": "test"}
             if self.vector_store_type == 'AzureSearch':
                 self.vector_store.add_documents(documents=docs, keys=keys)
             else:
@@ -194,6 +194,7 @@ class LLMHelper:
         )
         result = chain({"question": question, "chat_history": chat_history})
         sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
+        docmetadata = result["source_documents"]
 
         container_sas = self.blob_client.get_container_sas()
 
@@ -210,7 +211,7 @@ class LLMHelper:
         sources = sources.replace('_SAS_TOKEN_PLACEHOLDER_', container_sas)
         sources = self.filter_sourcesLinks(sources)
 
-        return question, result['answer'], contextDict, sources
+        return question, result['answer'], contextDict, sources, docmetadata
 
     def get_embeddings_model(self):
         OPENAI_EMBEDDINGS_ENGINE_DOC = os.getenv('OPENAI_EMEBDDINGS_ENGINE', os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', 'text-embedding-ada-002'))  
