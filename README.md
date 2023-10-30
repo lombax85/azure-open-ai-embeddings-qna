@@ -1,3 +1,10 @@
+# Todo:
+
+- per filtrare le ricerche forse devo creare un vector store diverso per ogni contesto -> https://www.reddit.com/r/LangChain/comments/14xkm80/vectordbqachain_and_filtering_by_metadata/?rdt=64360
+- 
+
+
+
 # Azure OpenAI Embeddings QnA
 
 A simple web application for a OpenAI-enabled document search. This repo uses Azure OpenAI Service for creating embeddings vectors from documents. For answering the question of a user, it retrieves the most relevant document and then uses GPT-3 to extract the matching answer for the question.
@@ -32,13 +39,27 @@ If you want to use a Chat based deployment (gpt-35-turbo or gpt-4-32k or gpt-4),
 
 # Running this repo
 You have multiple options to run the code:
--   [Deploy on Azure (WebApp + Batch Processing) with Azure Cognitive Search](#deploy-on-azure-webapp--batch-processing-with-azure-cognitive-search)
--   [Deploy on Azure (WebApp + Azure Cache for Redis + Batch Processing)](#deploy-on-azure-webapp--azure-cache-for-redis-enterprise--batch-processing)
--   [Deploy on Azure (WebApp + Redis Stack + Batch Processing)](#deploy-on-azure-webapp--redis-stack--batch-processing)
--   [Run everything locally in Docker (WebApp + Redis Stack + Batch Processing)](#run-everything-locally-in-docker-webapp--redis-stack--batch-processing)
--   [Run everything locally in Python with Conda (WebApp only)](#run-everything-locally-in-python-with-conda-webapp-only)
--   [Run everything locally in Python with venv](#run-everything-locally-in-python-with-venv)
--   [Run WebApp locally in Docker against an existing Redis deployment](#run-webapp-locally-in-docker-against-an-existing-redis-deployment)
+- [Todo:](#todo)
+- [Azure OpenAI Embeddings QnA](#azure-openai-embeddings-qna)
+  - [Learning More about Enterprise QnA](#learning-more-about-enterprise-qna)
+- [IMPORTANT NOTE (OpenAI generated)](#important-note-openai-generated)
+- [Use the Repo with Chat based deployment (gpt-35-turbo or gpt-4-32k or gpt-4)](#use-the-repo-with-chat-based-deployment-gpt-35-turbo-or-gpt-4-32k-or-gpt-4)
+- [Running this repo](#running-this-repo)
+  - [Deploy on Azure (WebApp + Batch Processing) with Azure Cognitive Search](#deploy-on-azure-webapp--batch-processing-with-azure-cognitive-search)
+    - [Signing up for Vector Search Private Preview in Azure Cognitive Search](#signing-up-for-vector-search-private-preview-in-azure-cognitive-search)
+  - [Deploy on Azure (WebApp + Azure Cache for Redis Enterprise + Batch Processing)](#deploy-on-azure-webapp--azure-cache-for-redis-enterprise--batch-processing)
+  - [Deploy on Azure (WebApp + Redis Stack + Batch Processing)](#deploy-on-azure-webapp--redis-stack--batch-processing)
+  - [Run everything locally in Docker (WebApp + Redis Stack + Batch Processing)](#run-everything-locally-in-docker-webapp--redis-stack--batch-processing)
+  - [Run everything locally in Python with Conda (WebApp only)](#run-everything-locally-in-python-with-conda-webapp-only)
+  - [Run everything locally in Python with venv](#run-everything-locally-in-python-with-venv)
+  - [Run WebApp locally in Docker against an existing Redis deployment](#run-webapp-locally-in-docker-against-an-existing-redis-deployment)
+    - [Option 1 - Run the prebuilt Docker image](#option-1---run-the-prebuilt-docker-image)
+    - [Option 2 - Build the Docker image yourself](#option-2---build-the-docker-image-yourself)
+  - [Use the QnA API from the backend](#use-the-qna-api-from-the-backend)
+    - [Call the API with no history for QnA mode](#call-the-api-with-no-history-for-qna-mode)
+    - [Call the API with history for Chat mode](#call-the-api-with-history-for-chat-mode)
+  - [Environment variables](#environment-variables)
+- [DISCLAIMER](#disclaimer)
 
 ## Deploy on Azure (WebApp + Batch Processing) with Azure Cognitive Search
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fruoccofabrizio%2Fazure-open-ai-embeddings-qna%2Fmain%2Finfrastructure%2Fdeployment_ACS.json)
