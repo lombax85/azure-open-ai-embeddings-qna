@@ -123,6 +123,8 @@ try:
         st.session_state['custom_prompt'] = ""
     if 'custom_temperature' not in st.session_state:
         st.session_state['custom_temperature'] = float(os.getenv("OPENAI_TEMPERATURE", 0.7))
+    if 'metadata' not in st.session_state:
+        st.session_state['metadata'] = {}
 
     if 'sources' not in st.session_state:
         st.session_state['sources'] = ""
