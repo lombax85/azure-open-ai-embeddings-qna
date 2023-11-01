@@ -36,7 +36,7 @@ class RedisExtended(Redis):
                 {"name": "key"},
                 {"name": "chunk"},
                 {"name": "filename"},
-                {"name": "test_meta"},
+                {"name": "permissions"},
             ]
         }
         rds = Redis(redis_url, index_name, embedding_function, index_schema=index_schema)
