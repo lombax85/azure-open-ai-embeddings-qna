@@ -1,6 +1,7 @@
 .venv
 code/embeddings_text.csv
 code/utilities/__pycache__
+packages/
 .env
 .env.lombax
 __pycache__

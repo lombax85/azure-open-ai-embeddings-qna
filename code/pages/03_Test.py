@@ -22,6 +22,7 @@ from langchain.document_loaders.base import BaseLoader
 from langchain.document_loaders import TextLoader
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from langchain.embeddings.openai import OpenAIEmbeddings
 
 from utilities.redis2 import RedisExtended
 
@@ -79,8 +80,15 @@ try:
     # )
     # st.text(answer)
 
+
+    embeddings = OpenAIEmbeddings(
+        deployment=os.getenv("OPENAI_EMBEDDINGS_ENGINE", "text-embedding-ada-002"),
+        model=os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', "text-embedding-ada-002"),
+        openai_api_base=os.getenv('OPENAI_API_BASE'),
+        openai_api_type="azure",
+    )
     # vector_store: RedisExtended = RedisExtended(redis_url=llm_helper.vector_store_full_address, index_name=llm_helper.index_name, embedding_function=llm_helper.embeddings.embed_query)  
-    vector_store: RedisExtended = RedisExtended(redis_url=llm_helper.vector_store_full_address, index_name=llm_helper.index_name, embedding_function=llm_helper.embeddings.embed_query)  
+    vector_store: RedisExtended = RedisExtended(redis_url=llm_helper.vector_store_full_address, index_name=llm_helper.index_name, embedding_function=embeddings)  
 
     # st.text(vector_store.__class__.__name__)
     # st.text(vector_store.as_retriever().__class__.__name__)

@@ -11,6 +11,7 @@ import logging
 logger = logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
 
 def check_deployment():
+    return
     # Check if the deployment is working
     #\ 1. Check if the llm is working
     try:
@@ -146,10 +147,10 @@ try:
     }
     st.set_page_config(layout="wide", menu_items=menu_items)
 
-    llm_helper = LLMHelper(custom_prompt=st.session_state.custom_prompt, temperature=st.session_state.custom_temperature)
+    #llm_helper = LLMHelper(custom_prompt=st.session_state.custom_prompt, temperature=st.session_state.custom_temperature)
 
     # Get available languages for translation
-    available_languages = get_languages()
+    #available_languages = get_languages()
 
     # Custom prompt variables
     custom_prompt_placeholder = """{summaries}  
@@ -183,23 +184,23 @@ try:
     question = st.text_input("Azure OpenAI Semantic Answer", value=st.session_state['askedquestion'], key="input"+str(st.session_state ['input_message_key']), on_change=questionAsked)
 
     # Answer the question if any
-    if st.session_state.askedquestion != '':
-        st.session_state['question'] = st.session_state.askedquestion
-        st.session_state.askedquestion = ""
-        st.session_state['question'], \
-        st.session_state['response'], \
-        st.session_state['context'], \
-        st.session_state['sources'], st.session_state['metadata'] = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], [])
-        st.session_state['response'], followup_questions_list = llm_helper.extract_followupquestions(st.session_state['response'])
-        st.session_state['followup_questions'] = followup_questions_list
+    # if st.session_state.askedquestion != '':
+    #     st.session_state['question'] = st.session_state.askedquestion
+    #     st.session_state.askedquestion = ""
+    #     st.session_state['question'], \
+    #     st.session_state['response'], \
+    #     st.session_state['context'], \
+    #     st.session_state['sources'], st.session_state['metadata'] = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], [])
+    #     st.session_state['response'], followup_questions_list = llm_helper.extract_followupquestions(st.session_state['response'])
+    #     st.session_state['followup_questions'] = followup_questions_list
 
     sourceList = []
 
     # Display the sources and context - even if the page is reloaded
-    if st.session_state['sources'] or st.session_state['context']:
-        st.session_state['response'], sourceList, matchedSourcesList, linkList, filenameList = llm_helper.get_links_filenames(st.session_state['response'], st.session_state['sources'])
-        st.write("<br>", unsafe_allow_html=True)
-        st.markdown("Answer: " + st.session_state['response'])
+    # if st.session_state['sources'] or st.session_state['context']:
+    #     st.session_state['response'], sourceList, matchedSourcesList, linkList, filenameList = llm_helper.get_links_filenames(st.session_state['response'], st.session_state['sources'])
+    #     st.write("<br>", unsafe_allow_html=True)
+    #     st.markdown("Answer: " + st.session_state['response'])
  
     # Display proposed follow-up questions which can be clicked on to ask that question automatically
     if len(st.session_state['followup_questions']) > 0:
@@ -235,9 +236,9 @@ try:
         if followup_question:
             str_followup_question = re.sub(r"(^|[^\\\\])'", r"\1\\'", followup_question)
 
-    if st.session_state['translation_language'] and st.session_state['translation_language'] != '':
-        st.write(f"Translation to other languages, 翻译成其他语言, النص باللغة العربية")
-        st.write(f"{llm_helper.translator.translate(st.session_state['response'], available_languages[st.session_state['translation_language']])}")		
+    # if st.session_state['translation_language'] and st.session_state['translation_language'] != '':
+    #     st.write(f"Translation to other languages, 翻译成其他语言, النص باللغة العربية")
+    #     st.write(f"{llm_helper.translator.translate(st.session_state['response'], available_languages[st.session_state['translation_language']])}")		
 		
 except Exception:
     st.error(traceback.format_exc())

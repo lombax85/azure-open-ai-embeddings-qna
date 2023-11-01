@@ -11,6 +11,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    build:
+      dockerfile: ./Webapp.Dockerfile
   api:
     image: redis/redis-stack-server:latest
     ports:
