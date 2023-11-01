@@ -4,6 +4,7 @@ load_dotenv()
 
 import os
 from utilities.helper import LLMHelper
+from langchain.embeddings.openai import OpenAIEmbeddings
 
 def main(req: azure.functions.HttpRequest) -> str:
     # Get data from POST request
@@ -20,6 +21,6 @@ def main(req: azure.functions.HttpRequest) -> str:
     llm_helper = LLMHelper(custom_prompt=custom_prompt, temperature=custom_temperature)
     # Get answer
     data = {}
-    data['question'], data['response'], data['context'], data["sources"] = llm_helper.get_semantic_answer_lang_chain(question, history)
+    data['question'], data['response'], data['context'], data["sources"] = llm_helper.get_semantic_answer_lang_chain_updated(question, history)
     # Return answer
     return f'{data}'

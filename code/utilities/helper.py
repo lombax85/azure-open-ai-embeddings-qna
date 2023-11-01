@@ -188,6 +188,51 @@ class LLMHelper:
             dataFrame = dataFrame.sort_values(by='filename')
         return dataFrame
 
+    def get_semantic_answer_lang_chain_updated(self, question, chat_history):
+        embeddings = OpenAIEmbeddings(
+            deployment=os.getenv("OPENAI_EMBEDDINGS_ENGINE", "text-embedding-ada-002"),
+            model=os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', "text-embedding-ada-002"),
+            openai_api_base=os.getenv('OPENAI_API_BASE'),
+            openai_api_type="azure",
+        )
+
+        # filter = RedisText("permissions") % "registered"
+        # inizializzo la chain
+        question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
+        doc_chain = load_qa_with_sources_chain(self.llm, chain_type="stuff", verbose=False, prompt=self.prompt)
+        chain = ConversationalRetrievalChain(
+            retriever=self.vector_store.as_retriever(
+                # search_kwargs={"filter" : filter} # inserisco i filtri come arg nel vector store
+            ),
+            question_generator=question_generator,
+            combine_docs_chain=doc_chain,
+            return_source_documents=True,
+        )
+
+        # chat_history = [("domanda", "risposta")]
+        # result = chain({"question": "Chi è ICT & More?", "chat_history": {}})
+
+        result = chain({"question": question, "chat_history": {}})
+        sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
+        docmetadata = result["source_documents"]
+
+        container_sas = self.blob_client.get_container_sas()
+
+        contextDict ={}
+        for res in result['source_documents']:
+            source_key = self.filter_sourcesLinks(res.metadata['source'].replace('_SAS_TOKEN_PLACEHOLDER_', container_sas)).replace('\n', '').replace(' ', '')
+            if source_key not in contextDict:
+                contextDict[source_key] = []
+            myPageContent = self.clean_encoding(res.page_content)
+            contextDict[source_key].append(myPageContent)
+        
+        result['answer'] = result['answer'].split('SOURCES:')[0].split('Sources:')[0].split('SOURCE:')[0].split('Source:')[0]
+        result['answer'] = self.clean_encoding(result['answer'])
+        sources = sources.replace('_SAS_TOKEN_PLACEHOLDER_', container_sas)
+        sources = self.filter_sourcesLinks(sources)
+
+        return question, result['answer'], contextDict, sources
+
     def get_semantic_answer_lang_chain(self, question, chat_history):
         question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
         doc_chain = load_qa_with_sources_chain(self.llm, chain_type="stuff", verbose=False, prompt=self.prompt)

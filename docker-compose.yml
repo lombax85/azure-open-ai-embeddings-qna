@@ -37,3 +37,4 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    command: sh -c "cd /home/site/wwwroot && pip3 install -r requirements.txt && /azure-functions-host/Microsoft.Azure.WebJobs.Script.WebHost"
