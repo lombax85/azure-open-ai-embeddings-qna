@@ -5,6 +5,8 @@ import logging
 import re
 import hashlib
 
+import streamlit as st
+
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import AzureOpenAI
 from langchain.vectorstores.base import VectorStore
@@ -147,7 +149,8 @@ class LLMHelper:
             if self.vector_store_type == 'AzureSearch':
                 self.vector_store.add_documents(documents=docs, keys=keys)
             else:
-                self.vector_store.add_documents(documents=docs, redis_url=self.vector_store_full_address,  index_name=self.index_name, keys=keys)
+                st.markdown(keys)
+                self.vector_store.add_documents(documents=docs, redis_url=self.vector_store_full_address,  index_name=self.index_name, keys=keys, metadata=doc.metadata)
             
         except Exception as e:
             logging.error(f"Error adding embeddings for {source_url}: {e}")
@@ -177,6 +180,7 @@ class LLMHelper:
 
     def get_all_documents(self, k: int = None):
         result = self.vector_store.similarity_search(query="*", k= k if k else self.k)
+        st.markdown(result)
         dataFrame = pd.DataFrame(list(map(lambda x: {
                 'key': x.metadata['key'],
                 'filename': x.metadata['filename'],

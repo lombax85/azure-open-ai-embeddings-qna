@@ -23,8 +23,17 @@ class RedisExtended(Redis):
         embedding_function: Callable,
         **kwargs: Any,
     ):
-        super().__init__(redis_url, index_name, embedding_function)
-        
+        schema = {
+            "text": [
+                {"name": "source"},
+                {"name": "key"},
+                {"name": "chunk"},
+                {"name": "filename"},
+                {"name": "test_meta"},
+            ]
+        }
+        super().__init__(redis_url, index_name, embedding_function, index_schema=schema)
+
         # Check if index exists
         try:
             self.client.ft("prompt-index").info()
