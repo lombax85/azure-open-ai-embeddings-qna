@@ -11,8 +11,7 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    build:
-      dockerfile: ./Webapp.Dockerfile
+    command: sh -c "pip3 install -r requirements.txt && streamlit run OpenAI_Queries.py --server.port 80 --server.enableXsrfProtection false"
   api:
     image: redis/redis-stack-server:latest
     ports:
