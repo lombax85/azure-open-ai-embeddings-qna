@@ -24,6 +24,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from langchain.embeddings.openai import OpenAIEmbeddings
 
+from langchain.vectorstores.redis.filters import RedisFilterExpression, RedisText, RedisTag
+
 from utilities.redis2 import RedisExtended
 
 from sys import settrace
@@ -93,11 +95,14 @@ try:
     # st.text(vector_store.__class__.__name__)
     # st.text(vector_store.as_retriever().__class__.__name__)
 
-
+    # filters https://python.langchain.com/docs/integrations/vectorstores/redis
+    filter = RedisText("key") % "*e*"
     question_generator = LLMChain(llm=llm_helper.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
     doc_chain = load_qa_with_sources_chain(llm_helper.llm, chain_type="stuff", verbose=False, prompt=llm_helper.prompt)
     chain = ConversationalRetrievalChain(
-        retriever=vector_store.as_retriever(),
+        retriever=vector_store.as_retriever(
+            #search_kwargs={"k": 3, "filter" : filter}
+        ),
         question_generator=question_generator,
         combine_docs_chain=doc_chain,
         return_source_documents=True,
@@ -105,12 +110,12 @@ try:
     )
     # settrace(my_tracer)
     result = chain({"question": "Chi è ICT & More?", "chat_history": {}})
-    sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
-    docmetadata = result["source_documents"]
+    #sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
+    #docmetadata = result["source_documents"]
 
     st.markdown(f"Result: {result}") 
-    st.markdown(f"Sources: {sources}") 
-    st.markdown(f"Metadata: {docmetadata}") 
+    #st.markdown(f"Sources: {sources}") 
+    #st.markdown(f"Metadata: {docmetadata}") 
 
     st.text("end")
 

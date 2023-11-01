@@ -19,9 +19,23 @@ from redis.commands.search.field import VectorField, TagField, TextField
 
 import streamlit as st
 
+from langchain.vectorstores.redis.filters import RedisFilterExpression, RedisText, RedisTag
+
 
 logger = logging.getLogger()
 class RedisVectorStoreRetriever(VectorStoreRetriever):
+    def __init__(
+        self,
+        vectorstore: Any,
+        **kwargs: Any, 
+    ):
+        st.text("vectorestore is")
+        st.text(vectorstore)
+        super().__init__(vectorstore=vectorstore)
+        for key, value in kwargs.items():
+            st.text("setting item")
+            st.text(value)
+            setattr(self, 'search_kwargs', value)
     """Retriever for Redis VectorStore."""
 
     vectorstore: Redis
@@ -58,7 +72,9 @@ class RedisVectorStoreRetriever(VectorStoreRetriever):
         self, query: str, *, run_manager: Any
     ) -> List[Document]:
         if self.search_type == "similarity":
+            st.markdown(self.search_kwargs)
             docs = self.vectorstore.similarity_search(query, **self.search_kwargs)
+            st.markdown(docs)
         elif self.search_type == "similarity_distance_threshold":
             if self.search_kwargs["distance_threshold"] is None:
                 raise ValueError(
@@ -92,153 +108,6 @@ class RedisVectorStoreRetriever(VectorStoreRetriever):
         """Add documents to vectorstore."""
         return await self.vectorstore.aadd_documents(documents, **kwargs)
 
-
-class aaaaRedisVectorStoreRetriever(BaseRetriever, BaseModel):
-    def __init__(
-        self,
-        vectorstore: Any,
-        **kwargs: Any, 
-    ):
-        st.text("vectorestore is")
-        st.text(vectorstore)
-        super().__init__(vectorstore=vectorstore)
-        for key, value in kwargs.items():
-            st.text("setting item")
-            st.text(value)
-            setattr(self, 'search_kwargs', value)
-
-    vectorstore: Redis
-    search_type: str = "similarity"
-    k: int = 4
-    score_threshold: float = 0.4
-
-    class Config:
-        """Configuration for this pydantic object."""
-
-        arbitrary_types_allowed = True
-
-    #@root_validator()
-    def validate_search_type(cls, values: Dict) -> Dict:
-        """Validate search type."""
-        if "search_type" in values:
-            search_type = values["search_type"]
-            if search_type not in ("similarity", "similarity_limit"):
-                raise ValueError(f"search_type of {search_type} not allowed.")
-        return values
-
-    def get_relevant_documents(self, query: str) -> List[Document]:
-        st.text("getting relevant documents")
-        if self.search_type == "similarity":
-            docs = self.vectorstore.similarity_search(query, k=self.k)
-        elif self.search_type == "similarity_limit":
-            docs = self.vectorstore.similarity_search_limit_score(
-                query, k=self.k, score_threshold=self.score_threshold
-            )
-        else:
-            raise ValueError(f"search_type of {self.search_type} not allowed.")
-        return docs
-
-    async def aget_relevant_documents(self, query: str) -> List[Document]:
-        raise NotImplementedError("RedisVectorStoreRetriever does not support async")
-
-# class RedisVectorStoreRetriever2(VectorStoreRetriever):
-#     def __init__(
-#         self,
-#         vectorstore: Any,
-#         **kwargs: Any, 
-#     ):
-#         st.text("vectorestore is")
-#         st.text(vectorstore)
-#         super().__init__(vectorstore=vectorstore)
-#         for key, value in kwargs.items():
-#             st.text("setting item")
-#             st.text(value)
-#             setattr(self, 'search_kwargs', value)
-        
-
-#     """Retriever for Redis VectorStore."""
-
-#     vectorstore: Redis
-#     """Redis VectorStore."""
-#     search_type: str = "similarity"
-#     """Type of search to perform. Can be either
-#     'similarity',
-#     'similarity_distance_threshold',
-#     'similarity_score_threshold'
-#     """
-
-#     search_kwargs: Dict[str, Any] = {
-#         "k": 4,
-#         "score_threshold": 0.9,
-#         # set to None to avoid distance used in score_threshold search
-#         "distance_threshold": None,
-#     }
-#     """Default search kwargs."""
-
-#     allowed_search_types = [
-#         "similarity",
-#         "similarity_distance_threshold",
-#         "similarity_score_threshold",
-#         "mmr",
-#     ]
-#     """Allowed search types."""
-
-#     class Config:
-#         """Configuration for this pydantic object."""
-
-#         arbitrary_types_allowed = True
-
-#     def similarity_search(
-#         self,
-#         query: str,
-#         k: int = 4,
-#         filter: Optional[Any] = None,
-#         return_metadata: bool = True,
-#         distance_threshold: Optional[float] = None,
-#         **kwargs: Any,
-#     ) -> List[Document]:
-#         st.text("similarity search")
-#         super().similarity_search(query, k, filter, return_metadata, distance_threshold)
-
-#     def _get_relevant_documents(
-#         self, query: str, *, run_manager: Any
-#     ) -> List[Document]:
-#         st.text("searching relevant documents")
-#         if self.search_type == "similarity":
-#             docs = self.vectorstore.similarity_search(query, **self.search_kwargs)
-#         elif self.search_type == "similarity_distance_threshold":
-#             if self.search_kwargs["distance_threshold"] is None:
-#                 raise ValueError(
-#                     "distance_threshold must be provided for "
-#                     + "similarity_distance_threshold retriever"
-#                 )
-#             docs = self.vectorstore.similarity_search(query, **self.search_kwargs)
-
-#         elif self.search_type == "similarity_score_threshold":
-#             docs_and_similarities = (
-#                 self.vectorstore.similarity_search_with_relevance_scores(
-#                     query, **self.search_kwargs
-#                 )
-#             )
-#             docs = [doc for doc, _ in docs_and_similarities]
-#         elif self.search_type == "mmr":
-#             docs = self.vectorstore.max_marginal_relevance_search(
-#                 query, **self.search_kwargs
-#             )
-#         else:
-#             raise ValueError(f"search_type of {self.search_type} not allowed.")
-#         return docs
-
-#     def add_documents(self, documents: List[Document], **kwargs: Any) -> List[str]:
-#         """Add documents to vectorstore."""
-#         return self.vectorstore.add_documents(documents, **kwargs)
-
-#     async def aadd_documents(
-#         self, documents: List[Document], **kwargs: Any
-#     ) -> List[str]:
-#         """Add documents to vectorstore."""
-#         return await self.vectorstore.aadd_documents(documents, **kwargs)
-
 class RedisExtended(Redis):
     def __init__(
         self,
@@ -247,7 +116,16 @@ class RedisExtended(Redis):
         embedding_function: Callable,
         **kwargs: Any,
     ):
-        super().__init__(redis_url, index_name, embedding_function)
+        schema = {
+            "text": [
+                {"name": "source"},
+                {"name": "key"},
+                {"name": "chunk"},
+                {"name": "filename"},
+                {"name": "test_meta"},
+            ]
+        }
+        super().__init__(redis_url, index_name, embedding_function, index_schema=schema)
 
         st.text("prova123")
 
@@ -268,16 +146,9 @@ class RedisExtended(Redis):
             # Create Redis Index
             self.create_index()
 
-    def as_retriever3(self, **kwargs: Any) -> BaseRetriever:
-        return RedisVectorStoreRetriever(vectorstore=self, kwargs={'filter': {'test_meta':'testa'}})
-
-    def as_retriever2(self, **kwargs: Any) -> RedisVectorStoreRetriever:
-        st.text("returning retriever from")
-        st.text(self)
-        retriever = RedisVectorStoreRetriever(vector_store=self, kwargs={'filter': {'test_meta':'testa'}})
-        st.text("retriever is")
-        st.text(retriever)
-        return retriever
+    def as_retriever(self, **kwargs: Any) -> BaseRetriever:
+        filter = RedisText("test_meta") % "t*"
+        return RedisVectorStoreRetriever(vectorstore=self, search_kwargs={'filter': filter})
 
     def check_existing_index(self, index_name: str = None):
         try:
