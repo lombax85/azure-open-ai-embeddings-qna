@@ -26,7 +26,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 
 from langchain.vectorstores.redis.filters import RedisFilterExpression, RedisText, RedisTag
 
-from utilities.redis2 import RedisExtended
+from utilities.redis import RedisExtended
 
 from sys import settrace
 
@@ -96,12 +96,12 @@ try:
     # st.text(vector_store.as_retriever().__class__.__name__)
 
     # filters https://python.langchain.com/docs/integrations/vectorstores/redis
-    filter = RedisText("key") % "*e*"
+    filter = RedisText("test_meta") % "tes*"
     question_generator = LLMChain(llm=llm_helper.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
     doc_chain = load_qa_with_sources_chain(llm_helper.llm, chain_type="stuff", verbose=False, prompt=llm_helper.prompt)
     chain = ConversationalRetrievalChain(
         retriever=vector_store.as_retriever(
-            #search_kwargs={"k": 3, "filter" : filter}
+            search_kwargs={"filter" : filter}
         ),
         question_generator=question_generator,
         combine_docs_chain=doc_chain,

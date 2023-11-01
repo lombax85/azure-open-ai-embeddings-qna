@@ -13,17 +13,24 @@ from redis.commands.search.query import Query
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from redis.commands.search.field import VectorField, TagField, TextField
 
+import streamlit as st
+
 logger = logging.getLogger()
 
 class RedisExtended(Redis):
-    def __init__(
-        self,
+    def __new__(
+        cls,
         redis_url: str,
         index_name: str,
-        embedding_function: Callable,
+        embedding: Embeddings = None,
+        embedding_function: Embeddings = None,
+        index_schema: Any = None,
+        vector_schema: Any = None,
+        relevance_score_fn: Optional[Callable[[float], float]] = None,
+        key_prefix: Optional[str] = None,
         **kwargs: Any,
     ):
-        schema = {
+        index_schema = {
             "text": [
                 {"name": "source"},
                 {"name": "key"},
@@ -32,20 +39,45 @@ class RedisExtended(Redis):
                 {"name": "test_meta"},
             ]
         }
-        super().__init__(redis_url, index_name, embedding_function, index_schema=schema)
+        rds = Redis(redis_url, index_name, embedding_function, index_schema=index_schema)
+        return rds 
+
+    def __init__(
+        self,
+        redis_url: str,
+        index_name: str,
+        embedding: Embeddings = None,
+        embedding_function: Embeddings = None,
+        index_schema: Any = None,
+        vector_schema: Any = None,
+        relevance_score_fn: Optional[Callable[[float], float]] = None,
+        key_prefix: Optional[str] = None,
+        **kwargs: Any,
+    ):
+        st.text("init method")
+        # index_schema = {
+        #     "text": [
+        #         {"name": "source"},
+        #         {"name": "key"},
+        #         {"name": "chunk"},
+        #         {"name": "filename"},
+        #         {"name": "test_meta"},
+        #     ]
+        # }
+        # super().__init__(redis_url, index_name, embedding_function, index_schema=index_schema)
 
         # Check if index exists
-        try:
-            self.client.ft("prompt-index").info()
-        except: 
-            # Create Redis Index
-            self.create_prompt_index()
+        # try:
+        #     self.client.ft("prompt-index").info()
+        # except: 
+        #     # Create Redis Index
+        #     self.create_prompt_index()
 
-        try:
-            self.client.ft(self.index_name).info()
-        except:
-            # Create Redis Index
-            self.create_index()
+        # try:
+        #     self.client.ft(self.index_name).info()
+        # except:
+        #     # Create Redis Index
+        #     self.create_index()
 
     def check_existing_index(self, index_name: str = None):
         try:
