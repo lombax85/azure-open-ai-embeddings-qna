@@ -209,10 +209,12 @@ class LLMHelper:
             return_source_documents=True,
         )
 
-        # chat_history = [("domanda", "risposta")]
-        # result = chain({"question": "Chi è ICT & More?", "chat_history": {}})
+        # chat history fix https://github.com/langchain-ai/langchain/discussions/6648 
+        chat_history_tuples = []
+        for message in chat_history:
+            chat_history_tuples.append((message[0], message[1]))
 
-        result = chain({"question": question, "chat_history": {}})
+        result = chain({"question": question, "chat_history": chat_history_tuples})
         sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
         docmetadata = result["source_documents"]
 
