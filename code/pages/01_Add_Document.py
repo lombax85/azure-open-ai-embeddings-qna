@@ -65,26 +65,30 @@ try:
     with st.expander("Add a single document to the knowledge base", expanded=True):
         st.write("For heavy or long PDF, please use the 'Add documents in batch' option below.")
         st.checkbox("Translate document to English", key="translate")
-        uploaded_file = st.file_uploader("Upload a document to add it to the knowledge base", type=['pdf','jpeg','jpg','png', 'txt'])
-        if uploaded_file is not None:
+        uploaded_files2 = st.file_uploader("Upload a document to add it to the Azure Storage Account", type=['pdf','jpeg','jpg','png', 'txt'], accept_multiple_files=True, key="test")
+        if uploaded_files2 is not None:
             # To read file as bytes:
-            bytes_data = uploaded_file.getvalue()
+            for uploaded_file in uploaded_files2:
+                bytes_data = uploaded_file.getvalue()
 
-            if st.session_state.get('filename', '') != uploaded_file.name:
-                upload_file(bytes_data, uploaded_file.name)
-                converted_filename = ''
-                if uploaded_file.name.endswith('.txt'):
-                    # Add the text to the embeddings
-                    llm_helper.add_embeddings_lc(st.session_state['file_url'])
+                try:
+                    if st.session_state.get('filename', '') != uploaded_file.name:
+                        upload_file(bytes_data, uploaded_file.name)
+                        converted_filename = ''
+                        if uploaded_file.name.endswith('.txt'):
+                            # Add the text to the embeddings
+                            llm_helper.add_embeddings_lc(st.session_state['file_url'])
 
-                else:
-                    # Get OCR with Layout API and then add embeddigns
-                    converted_filename = llm_helper.convert_file_and_add_embeddings(st.session_state['file_url'], st.session_state['filename'], st.session_state['translate'])
-                
-                llm_helper.blob_client.upsert_blob_metadata(uploaded_file.name, {'converted': 'true', 'embeddings_added': 'true', 'converted_filename': parse.quote(converted_filename)})
-                st.success(f"File {uploaded_file.name} embeddings added to the knowledge base.")
-            
-            # pdf_display = f'<iframe src="{st.session_state["file_url"]}" width="700" height="1000" type="application/pdf"></iframe>'
+                        else:
+                            # Get OCR with Layout API and then add embeddigns
+                            converted_filename = llm_helper.convert_file_and_add_embeddings(st.session_state['file_url'], st.session_state['filename'], st.session_state['translate'])
+                        
+                        llm_helper.blob_client.upsert_blob_metadata(uploaded_file.name, {'converted': 'true', 'embeddings_added': 'true', 'converted_filename': parse.quote(converted_filename)})
+                        st.success(f"File {uploaded_file.name} embeddings added to the knowledge base.")
+                    
+                    # pdf_display = f'<iframe src="{st.session_state["file_url"]}" width="700" height="1000" type="application/pdf"></iframe>'
+                except:
+                    st.error(f"File {uploaded_file.name} embeddings not to the knowledge base.")
 
     with st.expander("Add text to the knowledge base", expanded=False):
         col1, col2 = st.columns([3,1])
