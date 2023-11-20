@@ -3,6 +3,13 @@
 - per filtrare le ricerche forse devo creare un vector store diverso per ogni contesto -> https://www.reddit.com/r/LangChain/comments/14xkm80/vectordbqachain_and_filtering_by_metadata/?rdt=64360
 - 
 
+# Changelog
+## dal 1 novembre ho fatto diversi cambiamenti
+
+Questi cambiamenti sono stati effettuati durante alcuni test e confronti con la versione nativa di vector search per Azure OpenAI
+
+- `.env` modificata la temperatura portandola a 0
+- `.env` modificato il chunk size a 1000 (da 500) e l'overlap a 200 (da 100). NB sui test fatti su Azure ho trovato anche roba da 1200-1300 token quindi forse devo alzare ancora un po'?
 
 
 # Azure OpenAI Embeddings QnA
