@@ -34,6 +34,14 @@ import urllib
 
 from fake_useragent import UserAgent
 
+from langchain.callbacks.base import BaseCallbackHandler
+
+STREAMING = ""
+class StreamingCallbackHandler(BaseCallbackHandler):
+    def on_llm_new_token(self, token: str, **kwargs) -> None:
+        global STREAMING
+        STREAMING += token
+
 class LLMHelper:
     def __init__(self,
         document_loaders : BaseLoader = None, 
@@ -97,7 +105,7 @@ class LLMHelper:
             openai_api_type="azure",
         )
         if self.deployment_type == "Chat":
-            self.llm: ChatOpenAI = ChatOpenAI(model_name=self.deployment_name, engine=self.deployment_name, temperature=self.temperature, max_tokens=self.max_tokens if self.max_tokens != -1 else None) if llm is None else llm
+            self.llm: ChatOpenAI = ChatOpenAI(model_name=self.deployment_name, engine=self.deployment_name, temperature=self.temperature, max_tokens=self.max_tokens if self.max_tokens != -1 else None, streaming=True, callbacks=[StreamingCallbackHandler()]) if llm is None else llm
         else:
             self.llm: AzureOpenAI = AzureOpenAI(deployment_name=self.deployment_name, temperature=self.temperature, max_tokens=self.max_tokens) if llm is None else llm
         if self.vector_store_type == "AzureSearch":
@@ -113,6 +121,11 @@ class LLMHelper:
 
         self.user_agent: UserAgent() = UserAgent()
         self.user_agent.random
+
+    def streaming(self):
+        global STREAMING
+        return STREAMING
+
 
     def add_embeddings_lc(self, source_url):
         try:
@@ -189,6 +202,9 @@ class LLMHelper:
         return dataFrame
 
     def get_semantic_answer_lang_chain_updated(self, question, chat_history):
+        global STREAMING
+        STREAMING = ""
+
         embeddings = OpenAIEmbeddings(
             deployment=os.getenv("OPENAI_EMBEDDINGS_ENGINE", "text-embedding-ada-002"),
             model=os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', "text-embedding-ada-002"),
