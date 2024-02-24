@@ -214,7 +214,18 @@ class LLMHelper:
 
         # filter = RedisText("permissions") % "registered"
         # inizializzo la chain
-        question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
+
+        condense_template = """Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language,
+        and including all the relevant informations of the conversation so far. When including the informations, be precise and concise, the question must be
+        max 100 characters and include everything information useful for a RAG search
+        Chat History:
+        {chat_history}
+        Follow Up Input: {question}
+        Standalone question:"""  # noqa: E501
+
+        test_prompt = PromptTemplate.from_template(condense_template)
+
+        question_generator = LLMChain(llm=self.llm, prompt=test_prompt, verbose=False)
         doc_chain = load_qa_with_sources_chain(self.llm, chain_type="stuff", verbose=False, prompt=self.prompt)
         chain = ConversationalRetrievalChain(
             retriever=self.vector_store.as_retriever(
@@ -252,7 +263,7 @@ class LLMHelper:
         return question, result['answer'], contextDict, sources
 
     def get_semantic_answer_lang_chain(self, question, chat_history):
-        question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
+        #question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
         doc_chain = load_qa_with_sources_chain(self.llm, chain_type="stuff", verbose=False, prompt=self.prompt)
         chain = ConversationalRetrievalChain(
             retriever=self.vector_store.as_retriever(),
