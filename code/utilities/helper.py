@@ -33,6 +33,8 @@ import pandas as pd
 import urllib
 import streamlit as st
 
+import uuid 
+
 from fake_useragent import UserAgent
 
 from langchain.callbacks.base import BaseCallbackHandler
@@ -205,7 +207,7 @@ class LLMHelper:
                 document.metadata['source'] = f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)"
                 document.metadata['filename'] = filename
                 document.metadata['permissions'] = "public"
-                document.metadata['key'] = hash_key
+                document.metadata['key'] = str(uuid.uuid1())
                 st.markdown(document)
             
 

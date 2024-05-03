@@ -92,7 +92,7 @@ try:
     st.markdown("Chain: ")
 
     # faccio una domanda, per ora senza history, e ottengo risultati, source e metadata
-    result = chain({"question": "riassunto della riunione del 3 maggio 2024", "chat_history": {}})
+    result = chain({"question": "qualcuno Sarebbe Millennial ma si sente Gen Z", "chat_history": {}})
 
     #result = llm_helper.retriever.invoke("riassunto della riunione del 3 maggio 2024")
     st.markdown(result)
