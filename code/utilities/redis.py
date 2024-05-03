@@ -39,6 +39,7 @@ class RedisExtended(Redis):
                 {"name": "chunk"},
                 {"name": "filename"},
                 {"name": "permissions"},
+                {"name": "doc_id"},
             ]
         }
         rds = super().__init__(redis_url, index_name, embedding_function, index_schema=index_schema)

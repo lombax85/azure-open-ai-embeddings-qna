@@ -32,6 +32,13 @@ from utilities.azuresearch import AzureSearch
 import pandas as pd
 import urllib
 
+from langchain.retrievers import ParentDocumentRetriever
+from langchain.storage._lc_store import create_kv_docstore
+from langchain.storage import LocalFileStore
+import uuid
+import streamlit as st
+
+
 from fake_useragent import UserAgent
 
 class LLMHelper:
@@ -114,6 +121,19 @@ class LLMHelper:
         self.user_agent: UserAgent() = UserAgent()
         self.user_agent.random
 
+        # 3 may: creating a local filestore (temporary) for the ParentDocumentRetriever
+        # + linking the ParentDocumentRetriever with the VectorStore
+        fs = LocalFileStore("/tmp/localstore")
+        store = create_kv_docstore(fs)
+
+        if self.vector_store:
+            self.retriever = ParentDocumentRetriever(
+                vectorstore=self.vector_store,
+                docstore=store,
+                child_splitter=self.text_splitter,
+            )
+
+
     def add_embeddings_lc(self, source_url):
         try:
             documents = self.document_loaders(source_url).load()
@@ -135,19 +155,21 @@ class LLMHelper:
                 if doc.page_content == '':
                     docs.remove(doc)
             
-            keys = []
-            for i, doc in enumerate(docs):
-                # Create a unique key for the document
+            # 3 may 2024. Documents in the Vector Store (Redis) are splitted directly by the retriever, when added to it through self.retriever.add_documents
+            # However documents saved in the LocalFileStore (created above) are not split, so they are available not chunked for the llm
+            for i, document in enumerate(documents):
                 source_url = source_url.split('?')[0]
                 filename = "/".join(source_url.split('/')[4:])
-                hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
+                hash_key = hashlib.sha1(f"{source_url}".encode('utf-8')).hexdigest()
                 hash_key = f"doc:{self.index_name}:{hash_key}"
-                keys.append(hash_key)
-                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "permissions": "public"}
-            if self.vector_store_type == 'AzureSearch':
-                self.vector_store.add_documents(documents=docs, keys=keys)
-            else:
-                self.vector_store.add_documents(documents=docs, redis_url=self.vector_store_full_address,  index_name=self.index_name, keys=keys, metadata=doc.metadata)
+                document.metadata['source'] = f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)"
+                document.metadata['filename'] = filename
+                document.metadata['permissions'] = "public"
+                document.metadata['key'] = str(uuid.uuid1())
+                st.markdown(document)
+            
+
+            self.retriever.add_documents(documents=documents)
             
         except Exception as e:
             logging.error(f"Error adding embeddings for {source_url}: {e}")
