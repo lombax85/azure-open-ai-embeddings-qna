@@ -37,6 +37,11 @@ from fake_useragent import UserAgent
 
 from langchain.callbacks.base import BaseCallbackHandler
 
+from langchain.retrievers import ParentDocumentRetriever
+from langchain.storage._lc_store import create_kv_docstore
+from langchain.storage import LocalFileStore
+
+
 STREAMING = ""
 class StreamingCallbackHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs) -> None:
@@ -128,6 +133,18 @@ class LLMHelper:
         self.user_agent: UserAgent() = UserAgent()
         self.user_agent.random
 
+        fs = LocalFileStore("/tmp")
+        store = create_kv_docstore(fs)
+
+        if self.vector_store:
+            self.retriever = ParentDocumentRetriever(
+                vectorstore=self.vector_store,
+                docstore=store,
+                child_splitter=self.text_splitter,
+            )
+
+        
+
     def streaming(self):
         global STREAMING
         return STREAMING
@@ -167,6 +184,7 @@ class LLMHelper:
                 self.vector_store.add_documents(documents=docs, keys=keys)
             else:
                 self.vector_store.add_documents(documents=docs, redis_url=self.vector_store_full_address,  index_name=self.index_name, keys=keys, metadata=doc.metadata)
+                self.retriever.add_documents(documents=docs)
             
         except Exception as e:
             logging.error(f"Error adding embeddings for {source_url}: {e}")

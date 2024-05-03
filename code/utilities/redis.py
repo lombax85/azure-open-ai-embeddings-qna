@@ -27,120 +27,6 @@ from utilities.azureblobstorage import AzureBlobStorageClient
 logger = logging.getLogger()
 
 
-class RedisVectorStoreRetriever(ParentDocumentRetriever):
-    def __init__(
-        self,
-        vectorstore: Any,
-        **kwargs: Any, 
-    ):
-        st.text("vectorestore is")
-        st.text(dir(vectorstore))
-
-        splitter = TokenTextSplitter(chunk_size=1024, chunk_overlap=256)
-
-        store = InMemoryStore()
-        client = AzureBlobStorageClient()
-
-        docs = {
-                'doc:embeddings:bb77a4e1243d89c1e8d3c8e5679cc55bbf21bf8d' : "ict & more è un nostro fornitore"
-            }
-        
-
-        store.mset(
-            [("IDENTIFICATORECASUALE", "abbiamo fatto la pizza"), ("k2", b"v2")]
-        )
-        
-        super().__init__(
-            vectorstore=vectorstore,
-            docstore=store,
-            child_splitter=splitter
-        )
-
-
-        for key, value in kwargs.items():
-            st.text("setting item")
-            st.text(value)
-            setattr(self, 'search_kwargs', value)
-
-
-    """Retriever for Redis VectorStore."""
-
-    vectorstore: Redis
-    """Redis VectorStore."""
-    search_type: str = "similarity"
-    """Type of search to perform. Can be either
-    'similarity',
-    'similarity_distance_threshold',
-    'similarity_score_threshold'
-    """
-
-    search_kwargs: Dict[str, Any] = {
-        "k": 4,
-        "score_threshold": 0.9,
-        # set to None to avoid distance used in score_threshold search
-        "distance_threshold": None,
-    }
-    """Default search kwargs."""
-
-    allowed_search_types = [
-        "similarity",
-        "similarity_distance_threshold",
-        "similarity_score_threshold",
-        "mmr",
-    ]
-    """Allowed search types."""
-
-    class Config:
-        """Configuration for this pydantic object."""
-
-        arbitrary_types_allowed = True
-
-    def _get_relevant_documents(
-        self, query: str, *, run_manager: Any
-    ) -> List[Document]:
-        if self.search_type == "similarity":
-            st.markdown(self.search_kwargs)
-            docs = self.vectorstore.similarity_search(query, **self.search_kwargs)
-            st.markdown(docs)
-        elif self.search_type == "similarity_distance_threshold":
-            if self.search_kwargs["distance_threshold"] is None:
-                raise ValueError(
-                    "distance_threshold must be provided for "
-                    + "similarity_distance_threshold retriever"
-                )
-            docs = self.vectorstore.similarity_search(query, **self.search_kwargs)
-
-        elif self.search_type == "similarity_score_threshold":
-            docs_and_similarities = (
-                self.vectorstore.similarity_search_with_relevance_scores(
-                    query, **self.search_kwargs
-                )
-            )
-            docs = [doc for doc, _ in docs_and_similarities]
-        elif self.search_type == "mmr":
-            docs = self.vectorstore.max_marginal_relevance_search(
-                query, **self.search_kwargs
-            )
-        else:
-            raise ValueError(f"search_type of {self.search_type} not allowed.")
-        return docs
-
-    def add_documents(self, documents: List[Document], **kwargs: Any) -> List[str]:
-        """Add documents to vectorstore."""
-        return self.vectorstore.add_documents(documents, **kwargs)
-
-    async def aadd_documents(
-        self, documents: List[Document], **kwargs: Any
-    ) -> List[str]:
-        """Add documents to vectorstore."""
-        return await self.vectorstore.aadd_documents(documents, **kwargs)
-
-
-
-
-
-
-
 class RedisExtended(Redis):
 
     def __init__(
@@ -206,10 +92,6 @@ class RedisExtended(Redis):
     def delete_keys_pattern(self, pattern: str) -> None:
         keys = self.client.keys(pattern)
         self.delete_keys(keys)
-
-    def as_retriever(self, **kwargs: Any) -> BaseRetriever:
-        filter = RedisText("test_meta") % "t*"
-        return RedisVectorStoreRetriever(vectorstore=self, search_kwargs={'filter': filter})
 
     # def create_index(self, prefix = "doc", distance_metric:str="COSINE"):
     #     content = TextField(name="content")
