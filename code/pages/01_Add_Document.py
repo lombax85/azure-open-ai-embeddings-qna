@@ -87,8 +87,8 @@ try:
                         st.success(f"File {uploaded_file.name} embeddings added to the knowledge base.")
                     
                     # pdf_display = f'<iframe src="{st.session_state["file_url"]}" width="700" height="1000" type="application/pdf"></iframe>'
-                except:
-                    st.error(f"File {uploaded_file.name} embeddings not to the knowledge base.")
+                except e:
+                    st.error(f"File {uploaded_file.name} embeddings not to the knowledge base. {e}")
 
     with st.expander("Add text to the knowledge base", expanded=False):
         col1, col2 = st.columns([3,1])

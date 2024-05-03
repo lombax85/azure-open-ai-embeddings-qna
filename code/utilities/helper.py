@@ -170,25 +170,47 @@ class LLMHelper:
                 doc.page_content = re.sub(pattern, '', doc.page_content)
                 if doc.page_content == '':
                     docs.remove(doc)
-
-            docs = documents
             
             keys = []
-            for i, doc in enumerate(docs):
-                # Create a unique key for the document
+            # for i, doc in enumerate(docs):
+            #     # Create a unique key for the document
+            #     source_url = source_url.split('?')[0]
+            #     filename = "/".join(source_url.split('/')[4:])
+            #     hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
+            #     hash_key = f"doc:{self.index_name}:{hash_key}"
+            #     keys.append(hash_key)
+            #     doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "doc_id": "IDENTIFICATORECASUALE", "chunk": i, "key": hash_key, "filename": filename, "permissions": "public"}
+            #     #doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "permissions": "public"}
+            
+            # if self.vector_store_type == 'AzureSearch':
+            #     self.vector_store.add_documents(documents=docs, keys=keys)
+            # else:
+            #     self.vector_store.add_documents(documents=docs, redis_url=self.vector_store_full_address,  index_name=self.index_name, keys=keys, metadata=doc.metadata)
+
+
+            # text_splitter2 = TextSplitter(
+            #         separator="\n\n",
+            #         chunk_size=1000000,
+            #         chunk_overlap=200,
+            #         length_function=len,
+            #         is_separator_regex=False,
+            #     )
+
+            
+            for i, document in enumerate(documents):
                 source_url = source_url.split('?')[0]
                 filename = "/".join(source_url.split('/')[4:])
-                hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
+                hash_key = hashlib.sha1(f"{source_url}".encode('utf-8')).hexdigest()
                 hash_key = f"doc:{self.index_name}:{hash_key}"
-                keys.append(hash_key)
-                #doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "doc_id": "IDENTIFICATORECASUALE", "chunk": i, "key": hash_key, "filename": filename, "permissions": "public"}
-                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "permissions": "public"}
+                document.metadata['source'] = f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)"
+                document.metadata['filename'] = filename
+                document.metadata['permissions'] = "public"
+                document.metadata['key'] = hash_key
+                st.markdown(document)
             
-            if self.vector_store_type == 'AzureSearch':
-                self.vector_store.add_documents(documents=docs, keys=keys)
-            else:
-                #self.vector_store.add_documents(documents=docs, redis_url=self.vector_store_full_address,  index_name=self.index_name, keys=keys, metadata=doc.metadata)
-                self.retriever.add_documents(documents=docs)
+
+            self.retriever.add_documents(documents=documents)
+                
             
         except Exception as e:
             logging.error(f"Error adding embeddings for {source_url}: {e}")

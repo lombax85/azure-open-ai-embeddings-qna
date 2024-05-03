@@ -89,6 +89,8 @@ try:
         return_source_documents=True,
     )
 
+    st.markdown("Chain: ")
+
     # faccio una domanda, per ora senza history, e ottengo risultati, source e metadata
     result = chain({"question": "riassunto della riunione del 3 maggio 2024", "chat_history": {}})
 
