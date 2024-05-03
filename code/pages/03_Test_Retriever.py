@@ -82,6 +82,8 @@ try:
         ))
     st.markdown(llm_helper.retriever)
 
+    llm_helper.retriever.search_kwargs = {"filter" : filter}
+    
     chain = ConversationalRetrievalChain(
         retriever=llm_helper.retriever,
         question_generator=question_generator,
