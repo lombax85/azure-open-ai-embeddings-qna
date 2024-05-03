@@ -27,6 +27,10 @@ from langchain.vectorstores.redis.filters import RedisFilterExpression, RedisTex
 
 from utilities.redis import RedisExtended
 
+
+from langchain.retrievers import ParentDocumentRetriever
+from langchain.storage import InMemoryStore
+
 try:
     # Set page layout to wide screen and menu item
     menu_items = {
@@ -48,8 +52,6 @@ try:
                 """
     st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 
-    st.markdown("Testo la possibilità di filtrare i documenti sui metadata prima della ricerca. In questo caso ho inserito un metadata 'permissions' e due documenti, uno salvato come registered e uno come public. Per ora sono mutualmente esclusivi")
-
     llm_helper = LLMHelper()
 
     # inizializzo la classe che si occupa degli embedings
@@ -68,11 +70,12 @@ try:
 
     # Creo un filtro semplice - funziona anche con wildcard in questo caso usando % come operatore e * nella stringa
     # filters https://python.langchain.com/docs/integrations/vectorstores/redis
-    filter = RedisText("permissions") % "registered"
+    filter = RedisText("permissions") % "public"
 
     # inizializzo la chain
     question_generator = LLMChain(llm=llm_helper.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
     doc_chain = load_qa_with_sources_chain(llm_helper.llm, chain_type="stuff", verbose=False, prompt=llm_helper.prompt)
+
     chain = ConversationalRetrievalChain(
         retriever=vector_store.as_retriever(
             search_kwargs={"filter" : filter} # inserisco i filtri come arg nel vector store
@@ -83,38 +86,7 @@ try:
     )
 
     # faccio una domanda, per ora senza history, e ottengo risultati, source e metadata
-    result = chain({"question": "Chi è ICT & More?", "chat_history": {}})
-    sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
-    docmetadata = result["source_documents"]
-
-    # stampo solo la risposta
-    st.markdown("**Risposta ottenuta con query su permission registered **")
-    st.markdown(result["answer"])
-
-    # stampo i documenti che hanno portato alla risposta
-    st.markdown("**Documenti utilizzati per rispondere**")
-    st.markdown("\n".join(set(map(lambda x: "**File:** " + x.metadata["source"] + " **Permissions:** " + x.metadata["permissions"], result['source_documents']))))
-
-    # st.markdown(f"Result: {result}") 
-    # st.markdown(f"Sources: {sources}") 
-    # st.markdown(f"Metadata: {docmetadata}") 
-
-    st.markdown("---")
-
-    st.markdown("**Ora proviamo con permission public**")
-
-    filter = RedisText("permissions") % "public"
-    chain = ConversationalRetrievalChain(
-        retriever=vector_store.as_retriever(
-            search_kwargs={"filter" : filter} # inserisco i filtri come arg nel vector store
-        ),
-        question_generator=question_generator,
-        combine_docs_chain=doc_chain,
-        return_source_documents=True,
-    )
-
-    # faccio una domanda, per ora senza history, e ottengo risultati, source e metadata
-    result = chain({"question": "Chi sono i fornitori Logotel?", "chat_history": {}})
+    result = chain({"question": "riassunto della riunione del 3 maggio 2024", "chat_history": {}})
     sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
     docmetadata = result["source_documents"]
 
@@ -126,6 +98,11 @@ try:
     st.markdown("**Documenti utilizzati per rispondere**")
     st.markdown("\n".join(set(map(lambda x: "**File:** " + x.metadata["source"] + " **Permissions:** " + x.metadata["permissions"], result['source_documents']))))
 
+    st.markdown(f"Result: {result}") 
+    st.markdown(f"Sources: {sources}") 
+    st.markdown(f"Metadata: {docmetadata}") 
+
+    st.markdown("---")
 
 
 

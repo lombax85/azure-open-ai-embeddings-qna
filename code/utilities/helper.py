@@ -31,8 +31,17 @@ from utilities.azuresearch import AzureSearch
 
 import pandas as pd
 import urllib
+import streamlit as st
 
 from fake_useragent import UserAgent
+
+from langchain.callbacks.base import BaseCallbackHandler
+
+STREAMING = ""
+class StreamingCallbackHandler(BaseCallbackHandler):
+    def on_llm_new_token(self, token: str, **kwargs) -> None:
+        global STREAMING
+        STREAMING += token
 
 class LLMHelper:
     def __init__(self,
@@ -96,23 +105,33 @@ class LLMHelper:
             openai_api_base=os.getenv('OPENAI_API_BASE'),
             openai_api_type="azure",
         )
-        if self.deployment_type == "Chat":
-            self.llm: ChatOpenAI = ChatOpenAI(model_name=self.deployment_name, engine=self.deployment_name, temperature=self.temperature, max_tokens=self.max_tokens if self.max_tokens != -1 else None) if llm is None else llm
-        else:
-            self.llm: AzureOpenAI = AzureOpenAI(deployment_name=self.deployment_name, temperature=self.temperature, max_tokens=self.max_tokens) if llm is None else llm
-        if self.vector_store_type == "AzureSearch":
-            self.vector_store: VectorStore = AzureSearch(azure_cognitive_search_name=self.vector_store_address, azure_cognitive_search_key=self.vector_store_password, index_name=self.index_name, embedding_function=self.embeddings) if vector_store is None else vector_store
-        else:
-            self.vector_store: RedisExtended = RedisExtended(redis_url=self.vector_store_full_address, index_name=self.index_name, embedding_function=self.embeddings) if vector_store is None else vector_store   
-        self.k : int = 3 if k is None else k
 
         self.pdf_parser : AzureFormRecognizerClient = AzureFormRecognizerClient() if pdf_parser is None else pdf_parser
         self.blob_client: AzureBlobStorageClient = AzureBlobStorageClient() if blob_client is None else blob_client
         self.enable_translation : bool = False if enable_translation is None else enable_translation
         self.translator : AzureTranslatorClient = AzureTranslatorClient() if translator is None else translator
 
+        st.text("Vector Store is")
+        st.text(vector_store)
+
+
+        if self.deployment_type == "Chat":
+            self.llm: ChatOpenAI = ChatOpenAI(model_name=self.deployment_name, engine=self.deployment_name, temperature=self.temperature, max_tokens=self.max_tokens if self.max_tokens != -1 else None, streaming=True, callbacks=[StreamingCallbackHandler()]) if llm is None else llm
+        else:
+            self.llm: AzureOpenAI = AzureOpenAI(deployment_name=self.deployment_name, temperature=self.temperature, max_tokens=self.max_tokens) if llm is None else llm
+        if self.vector_store_type == "AzureSearch":
+            self.vector_store: VectorStore = AzureSearch(azure_cognitive_search_name=self.vector_store_address, azure_cognitive_search_key=self.vector_store_password, index_name=self.index_name, embedding_function=self.embeddings) if vector_store is None else vector_store
+        else:
+            self.vector_store: RedisExtended = RedisExtended(redis_url=self.vector_store_full_address, index_name=self.index_name, embedding_function=self.embeddings, blob_store="asataram") if vector_store is None else vector_store   
+        self.k : int = 3 if k is None else k
+
         self.user_agent: UserAgent() = UserAgent()
         self.user_agent.random
+
+    def streaming(self):
+        global STREAMING
+        return STREAMING
+
 
     def add_embeddings_lc(self, source_url):
         try:
@@ -143,7 +162,7 @@ class LLMHelper:
                 hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
                 hash_key = f"doc:{self.index_name}:{hash_key}"
                 keys.append(hash_key)
-                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "permissions": "public"}
+                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "doc_id": "IDENTIFICATORECASUALE", "chunk": i, "key": hash_key, "filename": filename, "permissions": "public"}
             if self.vector_store_type == 'AzureSearch':
                 self.vector_store.add_documents(documents=docs, keys=keys)
             else:
@@ -189,6 +208,9 @@ class LLMHelper:
         return dataFrame
 
     def get_semantic_answer_lang_chain_updated(self, question, chat_history):
+        global STREAMING
+        STREAMING = ""
+
         embeddings = OpenAIEmbeddings(
             deployment=os.getenv("OPENAI_EMBEDDINGS_ENGINE", "text-embedding-ada-002"),
             model=os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', "text-embedding-ada-002"),
@@ -198,7 +220,18 @@ class LLMHelper:
 
         # filter = RedisText("permissions") % "registered"
         # inizializzo la chain
-        question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
+
+        condense_template = """Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language,
+        and including all the relevant informations of the conversation so far. When including the informations, be precise and concise, the question must be
+        max 100 characters and include everything information useful for a RAG search
+        Chat History:
+        {chat_history}
+        Follow Up Input: {question}
+        Standalone question:"""  # noqa: E501
+
+        test_prompt = PromptTemplate.from_template(condense_template)
+
+        question_generator = LLMChain(llm=self.llm, prompt=test_prompt, verbose=False)
         doc_chain = load_qa_with_sources_chain(self.llm, chain_type="stuff", verbose=False, prompt=self.prompt)
         chain = ConversationalRetrievalChain(
             retriever=self.vector_store.as_retriever(
@@ -236,7 +269,7 @@ class LLMHelper:
         return question, result['answer'], contextDict, sources
 
     def get_semantic_answer_lang_chain(self, question, chat_history):
-        question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
+        #question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
         doc_chain = load_qa_with_sources_chain(self.llm, chain_type="stuff", verbose=False, prompt=self.prompt)
         chain = ConversationalRetrievalChain(
             retriever=self.vector_store.as_retriever(),

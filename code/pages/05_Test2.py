@@ -22,6 +22,7 @@ from langchain.document_loaders import TextLoader
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.retrievers import ParentDocumentRetriever
 
 from langchain.vectorstores.redis.filters import RedisFilterExpression, RedisText, RedisTag
 

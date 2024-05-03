@@ -3,11 +3,12 @@ services:
   web:
     image: fruocco/oai-embeddings
     ports:
-      - "8080:80"
+      - "8082:80"
     env_file:
       - .env
     volumes:
-      - '/media/walastorage/nextcloud/lombax85/files/NAS/ArchivioLocalRW/Temp/openai_embeddings/code/:/usr/local/src/myscripts'
+      - '/root/docker/openai_embeddings_2/code/:/usr/local/src/myscripts'
+    restart: always
     depends_on:
       api:
         condition: service_healthy
@@ -15,11 +16,12 @@ services:
   api:
     image: redis/redis-stack-server:latest
     ports:
-      - "6379:6379"
+      - "6380:6379"
     env_file:
       - .env
     volumes:
-      - /media/walastorage/nextcloud/lombax85/files/NAS/ArchivioLocalRW/Temp/openai_embeddings_data/:/data
+      - /root/docker/openai_embeddings_data_2/:/data
+    restart: always
     healthcheck:
       test: ["CMD", "redis-cli", "-h", "localhost", "-p", "6379", "ping"]
       interval: 2s
@@ -29,11 +31,12 @@ services:
   batch:
     image: fruocco/oai-batch:latest
     ports: 
-      - "8081:80"
+      - "8083:80"
     env_file:
       - .env
     volumes:
-      - '/media/walastorage/nextcloud/lombax85/files/NAS/ArchivioLocalRW/Temp/openai_embeddings/code/:/home/site/wwwroot'
+      - '/root/docker/openai_embeddings_2/code/:/home/site/wwwroot'
+    restart: always
     depends_on:
       api:
         condition: service_healthy
