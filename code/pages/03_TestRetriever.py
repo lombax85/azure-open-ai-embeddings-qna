@@ -76,10 +76,14 @@ try:
     question_generator = LLMChain(llm=llm_helper.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
     doc_chain = load_qa_with_sources_chain(llm_helper.llm, chain_type="stuff", verbose=False, prompt=llm_helper.prompt)
 
-    chain = ConversationalRetrievalChain(
-        retriever=vector_store.as_retriever(
+    st.markdown("Retriever: ")
+    st.markdown(vector_store.as_retriever(
             search_kwargs={"filter" : filter} # inserisco i filtri come arg nel vector store
-        ),
+        ))
+    st.markdown(llm_helper.retriever)
+
+    chain = ConversationalRetrievalChain(
+        retriever=llm_helper.retriever,
         question_generator=question_generator,
         combine_docs_chain=doc_chain,
         return_source_documents=True,
@@ -87,6 +91,10 @@ try:
 
     # faccio una domanda, per ora senza history, e ottengo risultati, source e metadata
     result = chain({"question": "riassunto della riunione del 3 maggio 2024", "chat_history": {}})
+
+    #result = llm_helper.retriever.invoke("riassunto della riunione del 3 maggio 2024")
+    st.markdown(result)
+
     sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
     docmetadata = result["source_documents"]
 
